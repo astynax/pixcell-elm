@@ -1,4 +1,4 @@
-module Button exposing (button, colorButton, dx, dy, hbox, viewButton)
+module Button exposing (bind, button, colorButton, dx, dy, hbox, viewButton)
 
 import Color exposing (Color)
 import Svg exposing (Svg)
@@ -89,7 +89,7 @@ viewButton b =
                     , height "10"
                     , fill <|
                         if b.active then
-                            "white"
+                            "gray"
 
                         else
                             "black"
@@ -102,7 +102,7 @@ viewButton b =
                     , height "9"
                     , fill <|
                         if b.active then
-                            "none"
+                            "black"
 
                         else
                             "gray"
@@ -113,8 +113,16 @@ viewButton b =
                     , bind y .y <| dy 1 b
                     , width <| Debug.toString <| b.width - 2
                     , height "8"
+                    , fill "#606060"
+                    ]
+                    []
+                , Svg.rect
+                    [ bind x .x <| dx 2 b
+                    , bind y .y <| dy 2 b
+                    , width "6"
+                    , height "6"
                     , fill <|
-                        Maybe.withDefault "#404040" <|
+                        Maybe.withDefault "none" <|
                             Maybe.map Color.toCssString b.color
                     ]
                     []
