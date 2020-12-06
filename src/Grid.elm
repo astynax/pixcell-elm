@@ -1,10 +1,28 @@
-module Grid exposing (Grid, from, map, set, encodeUsing)
+module Grid exposing
+    ( Grid
+    , Transformation(..)
+    , apply
+    , encodeUsing
+    , from
+    , map
+    , set
+    )
 
 import Color exposing (Color)
 
 
 type alias Grid a =
     List (List a)
+
+
+type Transformation
+    = FlipH
+    | FlipV
+    | Rotate
+    | ReflectH
+    | ReflectV
+    | ReflectQ
+    | ReflectR
 
 
 from : Int -> Grid Int
@@ -31,6 +49,84 @@ at n f l =
 
             x :: xs ->
                 f x :: xs
+
+
+apply : Transformation -> Grid a -> Grid a
+apply t =
+    case t of
+        FlipH ->
+            List.map List.reverse
+
+        FlipV ->
+            List.reverse
+
+        Rotate ->
+            rotate
+
+        ReflectH ->
+            List.map reflect
+
+        ReflectV ->
+            reflect
+
+        ReflectQ ->
+            reflect << List.map reflect
+
+        ReflectR ->
+            reflectRotate
+
+
+reflect : List a -> List a
+reflect l =
+    let
+        r =
+            List.take 8 l
+    in
+    List.append r <| List.reverse r
+
+
+reflectRotate : Grid a -> Grid a
+reflectRotate g =
+    let
+        q =
+            List.take 8 <| List.map (List.take 8) g
+
+        h =
+            List.map2 List.append q <| rotate q
+    in
+    List.append h <| List.reverse <| List.map List.reverse h
+
+
+rotate : List (List a) -> List (List a)
+rotate =
+    List.map List.reverse << transpose
+
+
+transpose : Grid a -> Grid a
+transpose l =
+    case conses l of
+        Just ( x, xs ) ->
+            x :: transpose xs
+
+        Nothing ->
+            []
+
+
+conses : List (List a) -> Maybe ( List a, List (List a) )
+conses =
+    List.foldr
+        (\i acc ->
+            Maybe.map2
+                (\( x, xs ) ( y, ys ) -> ( x :: y, xs :: ys ))
+                (uncons i)
+                acc
+        )
+        (Just ( [], [] ))
+
+
+uncons : List a -> Maybe ( a, List a )
+uncons l =
+    Maybe.map2 Tuple.pair (List.head l) (List.tail l)
 
 
 encodeUsing : b -> List b -> Grid Int -> Grid b

@@ -4,6 +4,7 @@ import Browser
 import Button exposing (..)
 import Color exposing (Color, rgb255)
 import Grid exposing (Grid)
+import Html
 import Svg exposing (Svg)
 import Svg.Attributes as Attr exposing (..)
 import Svg.Events exposing (onClick)
@@ -20,6 +21,9 @@ type Msg
     = Cell Int Int
     | Color Int
     | ToggleGuides
+    | Apply Grid.Transformation
+    | Clear
+    | Fill
     | Nop
 
 
@@ -57,15 +61,24 @@ update msg model =
             )
 
         Color x ->
-            ( { model
-                | color = x
-              }
-            , Cmd.none
-            )
+            ( { model | color = x }, Cmd.none )
+
+        Clear ->
+            ( { model | grid = Grid.from 0 }, Cmd.none )
+
+        Fill ->
+            ( { model | grid = Grid.from model.color }, Cmd.none )
 
         Cell x y ->
             ( { model
                 | grid = Grid.set model.color x y model.grid
+              }
+            , Cmd.none
+            )
+
+        Apply t ->
+            ( { model
+                | grid = Grid.apply t model.grid
               }
             , Cmd.none
             )
@@ -107,16 +120,17 @@ tools model =
     Svg.g [] <|
         List.map viewButton <|
             hbox <|
-                [ button "🗋 New" 30 Nop
-                , button "🖌 Fill" 25 Nop
-                , button "⚄ Rnd" 25 Nop
+                [ button "🗋 New" 30 Clear
+                , button "⚄ Rnd" 30 Nop
                 , button "🎨" 10 Nop
-                , button "⇄" 10 Nop
-                , button "⇅" 10 Nop
-                , button "▟" 10 Nop
-                , button "▐" 10 Nop
-                , button "▄" 10 Nop
-                , button "⥁" 10 Nop
+                , button "🖌" 10 <| Fill
+                , button "⇄" 10 <| Apply Grid.FlipH
+                , button "⇅" 10 <| Apply Grid.FlipV
+                , button "⥁" 10 <| Apply Grid.Rotate
+                , button "▟" 10 <| Apply Grid.ReflectQ
+                , button "▐" 10 <| Apply Grid.ReflectH
+                , button "▄" 10 <| Apply Grid.ReflectV
+                , button "◕" 10 <| Apply Grid.ReflectR
                 , let
                     b =
                         button "#" 10 ToggleGuides
