@@ -16,7 +16,11 @@ type alias Grid a =
 
 
 type Transformation
-    = FlipH
+    = ScrollR
+    | ScrollL
+    | ScrollU
+    | ScrollD
+    | FlipH
     | FlipV
     | Rotate
     | ReflectH
@@ -54,6 +58,18 @@ at n f l =
 apply : Transformation -> Grid a -> Grid a
 apply t =
     case t of
+        ScrollL ->
+            List.map scroll
+
+        ScrollR ->
+            List.map scrollBack
+
+        ScrollU ->
+            scroll
+
+        ScrollD ->
+            scrollBack
+
         FlipH ->
             List.map List.reverse
 
@@ -74,6 +90,21 @@ apply t =
 
         ReflectR ->
             reflectRotate
+
+
+scroll : List a -> List a
+scroll l =
+    case uncons l of
+        Just ( x, xs ) ->
+            List.append xs [ x ]
+
+        Nothing ->
+            l
+
+
+scrollBack : List a -> List a
+scrollBack =
+    List.reverse << scroll << List.reverse
 
 
 reflect : List a -> List a

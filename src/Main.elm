@@ -4,14 +4,14 @@ import Browser
 import Button exposing (..)
 import Color exposing (Color, rgb255)
 import Grid exposing (Grid)
-import Html
+import History exposing (Direction, History)
 import Svg exposing (Svg)
 import Svg.Attributes as Attr exposing (..)
 import Svg.Events exposing (onClick)
 
 
 type alias Model =
-    { grid : Grid Int
+    { grid : History (Grid Int)
     , color : Int
     , guides : Bool
     }
@@ -23,8 +23,8 @@ type Msg
     | ToggleGuides
     | Apply Grid.Transformation
     | Clear
-    | Fill
-    | Nop
+    | Undo
+    | Redo
 
 
 main : Program () Model Msg
@@ -39,7 +39,7 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    ( { grid = Grid.from 0
+    ( { grid = History.steps 10 <| Grid.from 0
       , color = 0
       , guides = True
       }
@@ -50,9 +50,6 @@ init () =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Nop ->
-            ( model, Cmd.none )
-
         ToggleGuides ->
             ( { model
                 | guides = not model.guides
@@ -64,24 +61,40 @@ update msg model =
             ( { model | color = x }, Cmd.none )
 
         Clear ->
-            ( { model | grid = Grid.from 0 }, Cmd.none )
-
-        Fill ->
-            ( { model | grid = Grid.from model.color }, Cmd.none )
+            ( updateGrid (always <| Grid.from model.color) model
+            , Cmd.none
+            )
 
         Cell x y ->
-            ( { model
-                | grid = Grid.set model.color x y model.grid
-              }
+            ( updateGrid (Grid.set model.color x y) model
             , Cmd.none
             )
 
         Apply t ->
-            ( { model
-                | grid = Grid.apply t model.grid
-              }
+            ( updateGrid (Grid.apply t) model
             , Cmd.none
             )
+
+        Undo ->
+            ( timeTravel History.Back model, Cmd.none )
+
+        Redo ->
+            ( timeTravel History.Forward model, Cmd.none )
+
+
+updateGrid : (Grid Int -> Grid Int) -> Model -> Model
+updateGrid f model =
+    { model | grid = History.change f model.grid }
+
+
+timeTravel : Direction -> Model -> Model
+timeTravel d model =
+    case History.travel d model.grid of
+        Just g ->
+            { model | grid = g }
+
+        Nothing ->
+            model
 
 
 view : Model -> Browser.Document Msg
@@ -110,7 +123,7 @@ editorView model =
         [ tools model
         , grid model.guides <|
             Grid.encodeUsing Color.black egaColors <|
-                model.grid
+                model.grid.now
         , palette <| model.color
         ]
 
@@ -120,10 +133,18 @@ tools model =
     Svg.g [] <|
         List.map viewButton <|
             hbox <|
-                [ button "🗋 New" 30 Clear
-                , button "⚄ Rnd" 30 Nop
-                , button "🎨" 10 Nop
-                , button "🖌" 10 <| Fill
+                [ Button.disable
+                    (not <| History.canTravel History.Back model.grid)
+                  <|
+                    button "↶" 10 Undo
+                , Button.disable
+                    (not <| History.canTravel History.Forward model.grid)
+                  <|
+                    button "↷" 10 Redo
+                , Button.disable True <| button "" 10 Clear
+                , button "🗋" 10 Clear
+                , button "⇸" 10 <| Apply Grid.ScrollR
+                , button "⤈" 10 <| Apply Grid.ScrollD
                 , button "⇄" 10 <| Apply Grid.FlipH
                 , button "⇅" 10 <| Apply Grid.FlipV
                 , button "⥁" 10 <| Apply Grid.Rotate
@@ -131,11 +152,10 @@ tools model =
                 , button "▐" 10 <| Apply Grid.ReflectH
                 , button "▄" 10 <| Apply Grid.ReflectV
                 , button "◕" 10 <| Apply Grid.ReflectR
-                , let
-                    b =
-                        button "#" 10 ToggleGuides
-                  in
-                  { b | active = model.guides }
+                , Button.disable True <| button "" 10 Clear
+                , Button.disable True <| button "🎨" 10 Clear
+                , Button.activate model.guides <|
+                    button "#" 10 ToggleGuides
                 ]
 
 
@@ -147,7 +167,8 @@ palette current =
                 List.indexedMap
                     (\idx c ->
                         Button.dy 170 <|
-                            colorButton (idx == current) c (Color idx)
+                            Button.activate (idx == current) <|
+                                colorButton c (Color idx)
                     )
                     egaColors
 
