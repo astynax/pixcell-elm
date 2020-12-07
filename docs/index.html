@@ -6290,10 +6290,10 @@ var $elm$html$Html$Events$on = F2(
 			event,
 			$elm$virtual_dom$VirtualDom$Normal(decoder));
 	});
-var $elm$svg$Svg$Events$onClick = function (msg) {
+var $elm$svg$Svg$Events$onMouseDown = function (msg) {
 	return A2(
 		$elm$html$Html$Events$on,
-		'click',
+		'mousedown',
 		$elm$json$Json$Decode$succeed(msg));
 };
 var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
@@ -6394,7 +6394,7 @@ var $author$project$Main$grid = F2(
 											$elm$svg$Svg$g,
 											_List_fromArray(
 												[
-													$elm$svg$Svg$Events$onClick(
+													$elm$svg$Svg$Events$onMouseDown(
 													A2($author$project$Main$Cell, col, row))
 												]),
 											A2(
@@ -6525,6 +6525,12 @@ var $elm$core$Maybe$map = F2(
 		}
 	});
 var $elm$core$Basics$neq = _Utils_notEqual;
+var $elm$svg$Svg$Events$onClick = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'click',
+		$elm$json$Json$Decode$succeed(msg));
+};
 var $author$project$Button$set = function (f) {
 	return A2($author$project$Button$bind, f, $elm$core$Basics$identity);
 };
