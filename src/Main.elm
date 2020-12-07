@@ -5,6 +5,7 @@ import Button exposing (..)
 import Color exposing (Color, rgb255)
 import Grid exposing (Grid)
 import History exposing (Direction, History)
+import Palette exposing (Palette)
 import Svg exposing (Svg)
 import Svg.Attributes as Attr exposing (..)
 import Svg.Events exposing (onClick)
@@ -13,6 +14,7 @@ import Svg.Events exposing (onClick)
 type alias Model =
     { grid : History (Grid Int)
     , color : Int
+    , palette : Palette
     , guides : Bool
     }
 
@@ -25,6 +27,7 @@ type Msg
     | Clear
     | Undo
     | Redo
+    | NextPalette
 
 
 main : Program () Model Msg
@@ -41,6 +44,7 @@ init : () -> ( Model, Cmd Msg )
 init () =
     ( { grid = History.steps 10 <| Grid.from 0
       , color = 0
+      , palette = Palette.init
       , guides = True
       }
     , Cmd.none
@@ -81,6 +85,11 @@ update msg model =
         Redo ->
             ( timeTravel History.Forward model, Cmd.none )
 
+        NextPalette ->
+            ( { model | palette = Palette.next model.palette }
+            , Cmd.none
+            )
+
 
 updateGrid : (Grid Int -> Grid Int) -> Model -> Model
 updateGrid f model =
@@ -106,24 +115,8 @@ view : Model -> Browser.Document Msg
 view model =
     { title = appTitle
     , body =
-        [ Svg.svg [ width <| Debug.toString (170 * 4), viewBox "0 0 170 180" ]
-            [ Svg.rect
-                [ x "0"
-                , y "0"
-                , width "170"
-                , height "10"
-                , fill "gray"
-                ]
-                []
-            , Svg.rect
-                [ x "1"
-                , y "1"
-                , width "168"
-                , height "9"
-                , fill "#404040"
-                ]
-                []
-            , editorView model
+        [ Svg.svg [ width <| Debug.toString (170 * 4), viewBox "0 0 170 170" ]
+            [ editorView model
             ]
         ]
     }
@@ -134,16 +127,16 @@ editorView model =
     Svg.g []
         [ tools model
         , grid model.guides <|
-            Grid.encodeUsing Color.black egaColors <|
+            Grid.encodeUsing Color.black model.palette.current <|
                 model.grid.now
-        , palette <| model.color
+        , palette model.palette.current <| model.color
         ]
 
 
 tools : Model -> Svg Msg
 tools model =
     Svg.g [] <|
-        List.map (viewButton << Button.dy 10) <|
+        List.map viewButton <|
             hbox <|
                 [ Button.disable
                     (not <| History.canTravel History.Back model.grid)
@@ -168,21 +161,21 @@ tools model =
                 , Button.disable True <| button "" Clear
                 , Button.activate model.guides <|
                     button "#" ToggleGuides
-                , Button.disable True <| button "🎨" Clear
+                , button "🎨" NextPalette
                 ]
 
 
-palette : Int -> Svg Msg
-palette current =
+palette : List Color -> Int -> Svg Msg
+palette colors current =
     Svg.g [] <|
-        List.map (viewButton << Button.dy 20 << Button.dx 160) <|
+        List.map (viewButton << Button.dy 10 << Button.dx 160) <|
             vbox <|
                 List.indexedMap
                     (\idx c ->
                         Button.activate (idx == current) <|
                             colorButton c (Color idx)
                     )
-                    egaColors
+                    colors
 
 
 grid : Bool -> Grid Color -> Svg Msg
@@ -196,7 +189,7 @@ grid guides g =
                             let
                                 cell =
                                     { x = col * 10
-                                    , y = 20 + row * 10
+                                    , y = 10 + row * 10
                                     , size = 10
                                     }
 
@@ -237,24 +230,3 @@ grid guides g =
                         cols
                 )
                 g
-
-
-egaColors : List Color
-egaColors =
-    [ rgb255 0 0 0
-    , rgb255 0 0 127
-    , rgb255 0 127 0
-    , rgb255 0 127 127
-    , rgb255 127 0 0
-    , rgb255 127 0 127
-    , rgb255 127 127 0
-    , rgb255 127 127 127
-    , rgb255 64 64 64
-    , rgb255 0 0 255
-    , rgb255 0 255 0
-    , rgb255 0 255 255
-    , rgb255 255 0 0
-    , rgb255 255 0 255
-    , rgb255 255 255 0
-    , rgb255 255 255 255
-    ]
