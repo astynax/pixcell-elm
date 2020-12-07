@@ -13,6 +13,7 @@ module Button exposing
     )
 
 import Color exposing (Color)
+import String
 import Svg exposing (Svg)
 import Svg.Attributes as Attr exposing (..)
 import Svg.Events exposing (onClick)
@@ -218,7 +219,7 @@ viewButton b =
                                     Disabled ->
                                         "gray"
                             , fontSize <|
-                                String.append (Debug.toString <| b.height - 4)
+                                String.append (String.fromInt <| b.height - 4)
                                     "px"
                             , textAnchor "middle"
                             ]
@@ -228,11 +229,11 @@ viewButton b =
                     b.text
 
 
-bind : (String -> Svg.Attribute m) -> (b -> a) -> b -> Svg.Attribute m
+bind : (String -> Svg.Attribute m) -> (b -> Int) -> b -> Svg.Attribute m
 bind f g =
-    f << Debug.toString << g
+    f << String.fromInt << g
 
 
-set : (String -> Svg.Attribute m) -> a -> Svg.Attribute m
+set : (String -> Svg.Attribute m) -> Int -> Svg.Attribute m
 set f =
     bind f identity

@@ -9,6 +9,7 @@ import Grid exposing (Grid)
 import History exposing (Direction, History)
 import Html
 import Palette exposing (Palette)
+import String
 import Svg exposing (Svg)
 import Svg.Attributes as Attr exposing (..)
 import Svg.Events exposing (onClick)
@@ -165,7 +166,7 @@ view model =
                     x
 
                 else
-                    Debug.toString y
+                    String.fromInt y
     in
     { title = appTitle
     , body =
