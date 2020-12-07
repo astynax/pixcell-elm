@@ -27,6 +27,7 @@ type Transformation
     | ReflectV
     | ReflectQ
     | ReflectR
+    | Cycle
 
 
 from : Int -> Grid Int
@@ -55,7 +56,7 @@ at n f l =
                 f x :: xs
 
 
-apply : Transformation -> Grid a -> Grid a
+apply : Transformation -> Grid Int -> Grid Int
 apply t =
     case t of
         ScrollL ->
@@ -90,6 +91,9 @@ apply t =
 
         ReflectR ->
             reflectRotate
+
+        Cycle ->
+            map (modBy 16 << (+) 1)
 
 
 scroll : List a -> List a

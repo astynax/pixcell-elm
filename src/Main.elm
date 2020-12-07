@@ -157,7 +157,7 @@ tools model =
                 , button "▐" <| Apply Grid.ReflectH
                 , button "▄" <| Apply Grid.ReflectV
                 , button "◕" <| Apply Grid.ReflectR
-                , Button.disable True <| button "" Clear
+                , button "⋮" <| Apply Grid.Cycle
                 , Button.disable True <| button "" Clear
                 , Button.activate model.guides <|
                     button "#" ToggleGuides
