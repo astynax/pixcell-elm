@@ -97,18 +97,30 @@ timeTravel d model =
             model
 
 
+appTitle : String
+appTitle =
+    "PixCell/Elm v1.0"
+
+
 view : Model -> Browser.Document Msg
 view model =
-    { title = "PixCell/Elm v1.0"
+    { title = appTitle
     , body =
-        [ Svg.svg [ width "640", height "720", viewBox "0 0 160 180" ]
+        [ Svg.svg [ width <| Debug.toString (170 * 4), viewBox "0 0 170 180" ]
             [ Svg.rect
                 [ x "0"
                 , y "0"
-                , width "160"
-                , height "180"
-                , fill "none"
-                , stroke "fuchsia"
+                , width "170"
+                , height "10"
+                , fill "gray"
+                ]
+                []
+            , Svg.rect
+                [ x "1"
+                , y "1"
+                , width "168"
+                , height "9"
+                , fill "#404040"
                 ]
                 []
             , editorView model
@@ -131,44 +143,44 @@ editorView model =
 tools : Model -> Svg Msg
 tools model =
     Svg.g [] <|
-        List.map viewButton <|
+        List.map (viewButton << Button.dy 10) <|
             hbox <|
                 [ Button.disable
                     (not <| History.canTravel History.Back model.grid)
                   <|
-                    button "↶" 10 Undo
+                    button "↶" Undo
                 , Button.disable
                     (not <| History.canTravel History.Forward model.grid)
                   <|
-                    button "↷" 10 Redo
-                , Button.disable True <| button "" 10 Clear
-                , button "🗋" 10 Clear
-                , button "⇸" 10 <| Apply Grid.ScrollR
-                , button "⤈" 10 <| Apply Grid.ScrollD
-                , button "⇄" 10 <| Apply Grid.FlipH
-                , button "⇅" 10 <| Apply Grid.FlipV
-                , button "⥁" 10 <| Apply Grid.Rotate
-                , button "▟" 10 <| Apply Grid.ReflectQ
-                , button "▐" 10 <| Apply Grid.ReflectH
-                , button "▄" 10 <| Apply Grid.ReflectV
-                , button "◕" 10 <| Apply Grid.ReflectR
-                , Button.disable True <| button "" 10 Clear
-                , Button.disable True <| button "🎨" 10 Clear
+                    button "↷" Redo
+                , Button.disable True <| button "" Clear
+                , button "🗋" Clear
+                , button "⇸" <| Apply Grid.ScrollR
+                , button "⤈" <| Apply Grid.ScrollD
+                , button "⇄" <| Apply Grid.FlipH
+                , button "⇅" <| Apply Grid.FlipV
+                , button "⥁" <| Apply Grid.Rotate
+                , button "▟" <| Apply Grid.ReflectQ
+                , button "▐" <| Apply Grid.ReflectH
+                , button "▄" <| Apply Grid.ReflectV
+                , button "◕" <| Apply Grid.ReflectR
+                , Button.disable True <| button "" Clear
+                , Button.disable True <| button "" Clear
                 , Button.activate model.guides <|
-                    button "#" 10 ToggleGuides
+                    button "#" ToggleGuides
+                , Button.disable True <| button "🎨" Clear
                 ]
 
 
 palette : Int -> Svg Msg
 palette current =
     Svg.g [] <|
-        List.map viewButton <|
-            hbox <|
+        List.map (viewButton << Button.dy 20 << Button.dx 160) <|
+            vbox <|
                 List.indexedMap
                     (\idx c ->
-                        Button.dy 170 <|
-                            Button.activate (idx == current) <|
-                                colorButton c (Color idx)
+                        Button.activate (idx == current) <|
+                            colorButton c (Color idx)
                     )
                     egaColors
 
@@ -184,15 +196,13 @@ grid guides g =
                             let
                                 cell =
                                     { x = col * 10
-                                    , y = 10 + row * 10
+                                    , y = 20 + row * 10
                                     , size = 10
                                     }
 
                                 pixel =
                                     if guides then
-                                        Button.dx 1 <|
-                                            Button.dy 1 <|
-                                                { cell | size = cell.size - 1 }
+                                        { cell | size = cell.size - 1 }
 
                                     else
                                         cell

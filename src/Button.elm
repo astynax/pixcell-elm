@@ -8,6 +8,7 @@ module Button exposing
     , dx
     , dy
     , hbox
+    , vbox
     , viewButton
     )
 
@@ -21,12 +22,18 @@ type alias Button a =
     { x : Int
     , y : Int
     , width : Int
+    , height : Int
     , msg : a
+    , state : State
     , text : Maybe String
     , color : Maybe Color
-    , active : Bool
-    , enabled : Bool
     }
+
+
+type State
+    = Normal
+    | Active
+    | Disabled
 
 
 hbox :
@@ -51,6 +58,28 @@ hboxFolder item ( v, acc ) =
     ( v + item.width, dx v item :: acc )
 
 
+vbox :
+    List { a | y : Int, height : Int }
+    -> List { a | y : Int, height : Int }
+vbox items =
+    case items of
+        [] ->
+            []
+
+        first :: rest ->
+            (::) first <|
+                Tuple.second <|
+                    List.foldl vboxFolder ( first.height, [] ) rest
+
+
+vboxFolder :
+    { a | y : Int, height : Int }
+    -> ( Int, List { a | y : Int, height : Int } )
+    -> ( Int, List { a | y : Int, height : Int } )
+vboxFolder item ( v, acc ) =
+    ( v + item.height, dy v item :: acc )
+
+
 dx : Int -> { a | x : Int } -> { a | x : Int }
 dx v i =
     { i | x = i.x + v }
@@ -61,14 +90,14 @@ dy v i =
     { i | y = i.y + v }
 
 
-button : String -> Int -> a -> Button a
-button t w m =
+button : String -> a -> Button a
+button t m =
     { x = 0
     , y = 0
+    , width = 10
+    , height = 10
     , msg = m
-    , active = False
-    , enabled = True
-    , width = w
+    , state = Normal
     , text = Just t
     , color = Nothing
     }
@@ -79,9 +108,9 @@ colorButton c m =
     { x = 0
     , y = 0
     , width = 10
+    , height = 10
     , msg = m
-    , active = False
-    , enabled = True
+    , state = Normal
     , text = Nothing
     , color = Just c
     }
@@ -89,18 +118,26 @@ colorButton c m =
 
 activate : Bool -> Button a -> Button a
 activate a b =
-    { b | active = a }
+    if a then
+        { b | state = Active }
+
+    else
+        b
 
 
 disable : Bool -> Button a -> Button a
 disable d b =
-    { b | enabled = not d }
+    if d then
+        { b | state = Disabled }
+
+    else
+        b
 
 
 viewButton : Button a -> Svg a
 viewButton b =
     Svg.g
-        (if b.enabled then
+        (if b.state /= Disabled then
             [ style "cursor: pointer;"
             , onClick b.msg
             ]
@@ -111,44 +148,52 @@ viewButton b =
     <|
         List.append
             [ Svg.rect
-                [ bind x .x b
-                , bind y .y b
-                , width <| Debug.toString b.width
-                , height "10"
+                [ set x b.x
+                , set y b.y
+                , set width b.width
+                , set height b.height
                 , fill <|
-                    if b.active && b.enabled then
-                        "gray"
+                    case b.state of
+                        Normal ->
+                            "#404040"
 
-                    else
-                        "black"
+                        Active ->
+                            "gray"
+
+                        Disabled ->
+                            "#606060"
                 ]
                 []
             , Svg.rect
-                [ bind x .x b
-                , bind y .y b
-                , width <| Debug.toString <| b.width - 1
-                , height "9"
+                [ set x b.x
+                , set y b.y
+                , set width <| b.width - 1
+                , set height <| b.height - 1
                 , fill <|
-                    if b.active || not b.enabled then
-                        "black"
+                    case b.state of
+                        Normal ->
+                            "gray"
 
-                    else
-                        "gray"
+                        Active ->
+                            "black"
+
+                        Disabled ->
+                            "#606060"
                 ]
                 []
             , Svg.rect
-                [ bind x .x <| dx 1 b
-                , bind y .y <| dy 1 b
-                , width <| Debug.toString <| b.width - 2
-                , height "8"
-                , fill <| if b.enabled then "#606060" else "black"
+                [ set x <| b.x + 1
+                , set y <| b.y + 1
+                , set width <| b.width - 2
+                , set height <| b.height - 2
+                , fill "#606060"
                 ]
                 []
             , Svg.rect
-                [ bind x .x <| dx 2 b
-                , bind y .y <| dy 2 b
-                , width "6"
-                , height "6"
+                [ set x <| b.x + 2
+                , set y <| b.y + 2
+                , set width <| b.width - 4
+                , set height <| b.height - 4
                 , fill <|
                     Maybe.withDefault "none" <|
                         Maybe.map Color.toCssString b.color
@@ -162,8 +207,19 @@ viewButton b =
                         [ Svg.text_
                             [ bind x .x <| dx (b.width // 2) b
                             , bind y .y <| dy 7 b
-                            , fill <| if b.enabled then "white" else "gray"
-                            , fontSize "6px"
+                            , fill <|
+                                case b.state of
+                                    Normal ->
+                                        "white"
+
+                                    Active ->
+                                        "white"
+
+                                    Disabled ->
+                                        "gray"
+                            , fontSize <|
+                                String.append (Debug.toString <| b.height - 4)
+                                    "px"
                             , textAnchor "middle"
                             ]
                             [ Svg.text t ]
@@ -175,3 +231,8 @@ viewButton b =
 bind : (String -> Svg.Attribute m) -> (b -> a) -> b -> Svg.Attribute m
 bind f g =
     f << Debug.toString << g
+
+
+set : (String -> Svg.Attribute m) -> a -> Svg.Attribute m
+set f =
+    bind f identity
