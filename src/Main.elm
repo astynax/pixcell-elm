@@ -12,7 +12,7 @@ import Palette exposing (Palette)
 import String
 import Svg exposing (Svg)
 import Svg.Attributes as Attr exposing (..)
-import Svg.Events exposing (onClick)
+import Svg.Events exposing (onMouseDown)
 import Task
 
 
@@ -276,7 +276,7 @@ grid guides g =
                                     else
                                         []
                             in
-                            Svg.g [ onClick <| Cell col row ] <|
+                            Svg.g [ onMouseDown <| Cell col row ] <|
                                 List.append bg
                                     [ Svg.rect
                                         [ bind x .x pixel
