@@ -1,14 +1,18 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Dom
+import Browser.Events
 import Button exposing (..)
 import Color exposing (Color, rgb255)
 import Grid exposing (Grid)
 import History exposing (Direction, History)
+import Html
 import Palette exposing (Palette)
 import Svg exposing (Svg)
 import Svg.Attributes as Attr exposing (..)
 import Svg.Events exposing (onClick)
+import Task
 
 
 type alias Model =
@@ -16,18 +20,23 @@ type alias Model =
     , color : Int
     , palette : Palette
     , guides : Bool
+    , resize : Bool
+    , width : Int
+    , height : Int
     }
 
 
 type Msg
-    = Cell Int Int
-    | Color Int
+    = Resize Int Int
+    | ToggleResize
     | ToggleGuides
+    | NextPalette
+    | Cell Int Int
+    | Color Int
     | Apply Grid.Transformation
     | Clear
     | Undo
     | Redo
-    | NextPalette
 
 
 main : Program () Model Msg
@@ -36,7 +45,7 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }
 
 
@@ -46,20 +55,31 @@ init () =
       , color = 0
       , palette = Palette.init
       , guides = True
+      , resize = True
+      , width = 680
+      , height = 680
       }
-    , Cmd.none
+    , getSize
     )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ToggleGuides ->
-            ( { model
-                | guides = not model.guides
-              }
-            , Cmd.none
+        Resize w h ->
+            ( { model | width = modSize w, height = modSize h }, Cmd.none )
+
+        ToggleResize ->
+            ( { model | resize = not model.resize }
+            , if not model.resize then
+                getSize
+
+              else
+                Cmd.none
             )
+
+        ToggleGuides ->
+            ( { model | guides = not model.guides }, Cmd.none )
 
         Color x ->
             ( { model | color = x }, Cmd.none )
@@ -91,6 +111,31 @@ update msg model =
             )
 
 
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    if model.resize then
+        Browser.Events.onResize Resize
+
+    else
+        Sub.none
+
+
+modSize : Int -> Int
+modSize x =
+    -- ugly, but it scales without artifacts
+    17 * (x // 17)
+
+
+getSize : Cmd Msg
+getSize =
+    Task.perform
+        (\vp ->
+            Resize (truncate vp.viewport.width)
+                (truncate vp.viewport.height)
+        )
+        Browser.Dom.getViewport
+
+
 updateGrid : (Grid Int -> Grid Int) -> Model -> Model
 updateGrid f model =
     { model | grid = History.change f model.grid }
@@ -113,11 +158,25 @@ appTitle =
 
 view : Model -> Browser.Document Msg
 view model =
+    let
+        ifResize f x y =
+            f <|
+                if not model.resize then
+                    x
+
+                else
+                    Debug.toString y
+    in
     { title = appTitle
     , body =
-        [ Svg.svg [ width <| Debug.toString (170 * 4), viewBox "0 0 170 170" ]
+        [ Svg.svg
+            [ ifResize width "680" model.width
+            , ifResize height "680" model.height
+            , viewBox "0 0 170 170"
+            ]
             [ editorView model
             ]
+        , Html.node "style" [] [ Html.text "body { background: black; } " ]
         ]
     }
 
@@ -138,7 +197,9 @@ tools model =
     Svg.g [] <|
         List.map viewButton <|
             hbox <|
-                [ Button.disable
+                [ Button.activate model.resize <|
+                    button "⤧" ToggleResize
+                , Button.disable
                     (not <| History.canTravel History.Back model.grid)
                   <|
                     button "↶" Undo
@@ -146,7 +207,6 @@ tools model =
                     (not <| History.canTravel History.Forward model.grid)
                   <|
                     button "↷" Redo
-                , Button.disable True <| button "" Clear
                 , button "🗋" Clear
                 , button "⇸" <| Apply Grid.ScrollR
                 , button "⤈" <| Apply Grid.ScrollD
