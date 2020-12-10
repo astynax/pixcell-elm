@@ -5,6 +5,7 @@ import Browser.Dom
 import Browser.Events
 import Button exposing (..)
 import Color exposing (Color, rgb255)
+import Export
 import Grid exposing (Grid)
 import History exposing (Direction, History)
 import Html
@@ -38,6 +39,7 @@ type Msg
     | Clear
     | Undo
     | Redo
+    | ExportPng
 
 
 main : Program () Model Msg
@@ -111,6 +113,9 @@ update msg model =
             , Cmd.none
             )
 
+        ExportPng ->
+            ( model, Export.toPng <| coloredGrid model )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -182,13 +187,16 @@ view model =
     }
 
 
+coloredGrid : Model -> Grid Color
+coloredGrid model =
+    Grid.encodeUsing Color.black model.palette.current model.grid.now
+
+
 editorView : Model -> Svg Msg
 editorView model =
     Svg.g []
         [ tools model
-        , grid model.guides <|
-            Grid.encodeUsing Color.black model.palette.current <|
-                model.grid.now
+        , grid model.guides <| coloredGrid model
         , palette model.palette.current <| model.color
         ]
 
@@ -200,6 +208,9 @@ tools model =
             hbox <|
                 [ Button.activate model.resize <|
                     button "⤧" ToggleResize
+                , Button.activate model.guides <|
+                    button "#" ToggleGuides
+                , button "🖬" ExportPng
                 , Button.disable
                     (not <| History.canTravel History.Back model.grid)
                   <|
@@ -219,9 +230,6 @@ tools model =
                 , button "▄" <| Apply Grid.ReflectV
                 , button "◕" <| Apply Grid.ReflectR
                 , button "⋮" <| Apply Grid.Cycle
-                , Button.disable True <| button "" Clear
-                , Button.activate model.guides <|
-                    button "#" ToggleGuides
                 , button "🎨" NextPalette
                 ]
 
