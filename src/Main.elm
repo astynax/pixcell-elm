@@ -15,6 +15,7 @@ import Svg exposing (Svg)
 import Svg.Attributes as Attr exposing (..)
 import Svg.Events exposing (onMouseDown)
 import Task
+import Glyph
 
 
 type alias Model =
@@ -207,30 +208,30 @@ tools model =
         List.map viewButton <|
             hbox <|
                 [ Button.activate model.resize <|
-                    button "⤧" ToggleResize
+                    imageButton Glyph.resize ToggleResize
                 , Button.activate model.guides <|
-                    button "#" ToggleGuides
-                , button "🖬" ExportPng
+                    imageButton Glyph.grid ToggleGuides
+                , imageButton Glyph.floppy ExportPng
                 , Button.disable
                     (not <| History.canTravel History.Back model.grid)
                   <|
-                    button "↶" Undo
+                    imageButton Glyph.undo Undo
                 , Button.disable
                     (not <| History.canTravel History.Forward model.grid)
                   <|
-                    button "↷" Redo
-                , button "🗋" Clear
-                , button "⇸" <| Apply Grid.ScrollR
-                , button "⤈" <| Apply Grid.ScrollD
-                , button "⇄" <| Apply Grid.FlipH
-                , button "⇅" <| Apply Grid.FlipV
-                , button "⥁" <| Apply Grid.Rotate
-                , button "▟" <| Apply Grid.ReflectQ
-                , button "▐" <| Apply Grid.ReflectH
-                , button "▄" <| Apply Grid.ReflectV
-                , button "◕" <| Apply Grid.ReflectR
-                , button "⋮" <| Apply Grid.Cycle
-                , button "🎨" NextPalette
+                    imageButton Glyph.redo Redo
+                , imageButton Glyph.paint Clear
+                , imageButton Glyph.scrollR <| Apply Grid.ScrollR
+                , imageButton Glyph.scrollD <| Apply Grid.ScrollD
+                , imageButton Glyph.flipH <| Apply Grid.FlipH
+                , imageButton Glyph.flipV <| Apply Grid.FlipV
+                , imageButton Glyph.rotate <| Apply Grid.Rotate
+                , imageButton Glyph.reflectQ <| Apply Grid.ReflectQ
+                , imageButton Glyph.reflectH <| Apply Grid.ReflectH
+                , imageButton Glyph.reflectV <| Apply Grid.ReflectV
+                , imageButton Glyph.reflectR <| Apply Grid.ReflectR
+                , imageButton Glyph.cycle <| Apply Grid.Cycle
+                , imageButton Glyph.palette NextPalette
                 ]
 
 

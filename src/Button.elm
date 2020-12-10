@@ -2,8 +2,9 @@ module Button exposing
     ( Button
     , activate
     , bind
-    , button
+    , textButton
     , colorButton
+    , imageButton
     , disable
     , dx
     , dy
@@ -19,6 +20,12 @@ import Svg.Attributes as Attr exposing (..)
 import Svg.Events exposing (onClick)
 
 
+type Type
+    = Text String
+    | Color Color
+    | Image String
+
+
 type alias Button a =
     { x : Int
     , y : Int
@@ -26,8 +33,7 @@ type alias Button a =
     , height : Int
     , msg : a
     , state : State
-    , text : Maybe String
-    , color : Maybe Color
+    , type_ : Type
     }
 
 
@@ -91,30 +97,33 @@ dy v i =
     { i | y = i.y + v }
 
 
-button : String -> a -> Button a
-button t m =
+textButton : String -> a -> Button a
+textButton t m =
     { x = 0
     , y = 0
     , width = 10
     , height = 10
     , msg = m
     , state = Normal
-    , text = Just t
-    , color = Nothing
+    , type_ = Text t
     }
 
 
 colorButton : Color -> a -> Button a
 colorButton c m =
-    { x = 0
-    , y = 0
-    , width = 10
-    , height = 10
-    , msg = m
-    , state = Normal
-    , text = Nothing
-    , color = Just c
-    }
+    let
+        b =
+            textButton "" m
+    in
+    { b | type_ = Color c }
+
+imageButton : String -> a -> Button a
+imageButton href m =
+    let
+        b =
+            textButton "" m
+    in
+    { b | type_ = Image href }
 
 
 activate : Bool -> Button a -> Button a
@@ -147,86 +156,95 @@ viewButton b =
             []
         )
     <|
-        List.append
-            [ Svg.rect
-                [ set x b.x
-                , set y b.y
-                , set width b.width
-                , set height b.height
-                , fill <|
-                    case b.state of
-                        Normal ->
-                            "#404040"
+        List.concat
+            [ [ Svg.rect
+                    [ set x b.x
+                    , set y b.y
+                    , set width b.width
+                    , set height b.height
+                    , fill <|
+                        case b.state of
+                            Normal ->
+                                "#404040"
 
-                        Active ->
-                            "gray"
+                            Active ->
+                                "gray"
 
-                        Disabled ->
-                            "#606060"
-                ]
-                []
-            , Svg.rect
-                [ set x b.x
-                , set y b.y
-                , set width <| b.width - 1
-                , set height <| b.height - 1
-                , fill <|
-                    case b.state of
-                        Normal ->
-                            "gray"
+                            Disabled ->
+                                "#606060"
+                    ]
+                    []
+              , Svg.rect
+                    [ set x b.x
+                    , set y b.y
+                    , set width <| b.width - 1
+                    , set height <| b.height - 1
+                    , fill <|
+                        case b.state of
+                            Normal ->
+                                "gray"
 
-                        Active ->
-                            "black"
+                            Active ->
+                                "black"
 
-                        Disabled ->
-                            "#606060"
-                ]
-                []
-            , Svg.rect
-                [ set x <| b.x + 1
-                , set y <| b.y + 1
-                , set width <| b.width - 2
-                , set height <| b.height - 2
-                , fill "#606060"
-                ]
-                []
-            , Svg.rect
-                [ set x <| b.x + 2
-                , set y <| b.y + 2
-                , set width <| b.width - 4
-                , set height <| b.height - 4
-                , fill <|
-                    Maybe.withDefault "none" <|
-                        Maybe.map Color.toCssString b.color
-                ]
-                []
-            ]
-        <|
-            Maybe.withDefault [] <|
-                Maybe.map
-                    (\t ->
-                        [ Svg.text_
-                            [ bind x .x <| dx (b.width // 2) b
-                            , bind y .y <| dy 7 b
-                            , fill <|
-                                case b.state of
-                                    Normal ->
-                                        "white"
-
-                                    Active ->
-                                        "white"
-
-                                    Disabled ->
-                                        "gray"
-                            , fontSize <|
-                                String.append (String.fromInt <| b.height - 4)
-                                    "px"
-                            , textAnchor "middle"
-                            ]
-                            [ Svg.text t ]
+                            Disabled ->
+                                "#606060"
+                    ]
+                    []
+              , Svg.rect
+                    [ set x <| b.x + 1
+                    , set y <| b.y + 1
+                    , set width <| b.width - 2
+                    , set height <| b.height - 2
+                    , fill "#606060"
+                    ]
+                    []
+              ]
+            , case b.type_ of
+                Color c ->
+                    [ Svg.rect
+                        [ set x <| b.x + 2
+                        , set y <| b.y + 2
+                        , set width <| b.width - 4
+                        , set height <| b.height - 4
+                        , fill <| Color.toCssString c
                         ]
-                    )
-                    b.text
+                        []
+                    ]
+
+                Text t ->
+                    [ Svg.text_
+                        [ bind x .x <| dx (b.width // 2) b
+                        , bind y .y <| dy 7 b
+                        , fill <|
+                            case b.state of
+                                Normal ->
+                                    "white"
+
+                                Active ->
+                                    "white"
+
+                                Disabled ->
+                                    "gray"
+                        , fontSize <|
+                            String.append (String.fromInt <| b.height - 4)
+                                "px"
+                        , textAnchor "middle"
+                        ]
+                        [ Svg.text t ]
+                    ]
+
+                Image p ->
+                    [ Svg.image
+                        [ set x <| b.x + 2
+                        , set y <| b.y + 2
+                        , set width <| b.width - 4
+                        , set height <| b.height - 4
+                        , xlinkHref p
+                        ]
+                        []
+                    ]
+            ]
 
 
 bind : (String -> Svg.Attribute m) -> (b -> Int) -> b -> Svg.Attribute m
