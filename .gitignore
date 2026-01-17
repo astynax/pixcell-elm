@@ -1,3 +1,4 @@
 elm-stuff/
 releases/*.zip
-^index.html
+/index.html
+/elm.js

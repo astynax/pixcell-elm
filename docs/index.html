@@ -10704,6 +10704,14 @@ var $author$project$Main$update = F2(
 		}
 	});
 var $author$project$Main$appTitle = 'PixCell/Elm v1.0';
+var $elm$virtual_dom$VirtualDom$attribute = F2(
+	function (key, value) {
+		return A2(
+			_VirtualDom_attribute,
+			_VirtualDom_noOnOrFormAction(key),
+			_VirtualDom_noJavaScriptOrHtmlUri(value));
+	});
+var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
 var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$g = $elm$svg$Svg$trustedNode('g');
 var $author$project$Main$Cell = F2(
@@ -11356,6 +11364,8 @@ var $elm$virtual_dom$VirtualDom$node = function (tag) {
 		_VirtualDom_noScript(tag));
 };
 var $elm$html$Html$node = $elm$virtual_dom$VirtualDom$node;
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
@@ -11374,7 +11384,11 @@ var $author$project$Main$view = function (model) {
 					[
 						A3(ifResize, $elm$svg$Svg$Attributes$width, '680', model.w),
 						A3(ifResize, $elm$svg$Svg$Attributes$height, '680', model.r),
-						$elm$svg$Svg$Attributes$viewBox('0 0 170 170')
+						$elm$svg$Svg$Attributes$viewBox('0 0 170 170'),
+						A2($elm$html$Html$Attributes$attribute, 'version', '1.1'),
+						A2($elm$html$Html$Attributes$style, 'user-select', 'none'),
+						A2($elm$html$Html$Attributes$style, '-webkit-user-select', 'none'),
+						A2($elm$html$Html$Attributes$style, 'cursor', 'crosshair')
 					]),
 				_List_fromArray(
 					[
