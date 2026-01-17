@@ -9,6 +9,7 @@ import Export
 import Grid exposing (Grid)
 import History exposing (Direction, History)
 import Html
+import Html.Attributes as HA
 import Palette exposing (Palette)
 import String
 import Svg exposing (Svg)
@@ -180,6 +181,10 @@ view model =
             [ ifResize width "680" model.width
             , ifResize height "680" model.height
             , viewBox "0 0 170 170"
+            , HA.attribute "version" "1.1"
+            , HA.style "user-select" "none"
+            , HA.style "-webkit-user-select" "none"
+            , HA.style "cursor" "crosshair"
             ]
             [ editorView model
             ]
